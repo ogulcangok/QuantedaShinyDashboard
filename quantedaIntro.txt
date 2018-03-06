@@ -1,0 +1,7 @@
+
+Welcome to QuantedaUI. Created by Ahmet Süerdem, Fuat Can Beylunioğlu and Oğulcan Gök. This application will help you to analyze your text data by creating various plots. IN order to use you should arrange your data in a CSV file. Your text column name should be "Text" and date format must be DD/MM/YYYY. 
+
+You can initilaze the app by uploading your CSV to the slot located in Corpus Creation tab. After the calculations the app will create a .rda file to your working
+directory which you can upload to continue to your work anytime you want. It will hold all the changes you make to your csv file. 
+
+If you want to save your progress any moment, you can just simply click the save button.
