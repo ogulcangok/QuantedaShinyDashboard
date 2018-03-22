@@ -2,30 +2,16 @@
 title: "QuantedaUI Manual"
 author: "Ogulcan Gok"
 date: "March 6, 2018"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(shinydashboard)
-library(quanteda)
-library(readtext)
-library(SnowballC)
-library(ggplot2)
-library(dplyr)
-library(spacyr)
-library(DT)
-library(shinyBS)
-library(anytime)
-library(lubridate)
-library(tidyverse)
-library(shinycssloaders)
 
-setwd("/home/ogulcan/dashboard//")
-
-```
 
 ## General Information
+
+
 
 Welcome to QuantedaUI. Created by Ahmet Süerdem, Fuat Can Beylunioğlu and Oğulcan Gök. This application will help you to analyze your text data by creating various plots. IN order to use you should arrange your data in a CSV file. Your text column name should be "Text" and date format must be DD/MM/YYYY. 
 
@@ -36,153 +22,76 @@ If you want to save your progress any moment, you can just simply click the save
 
 Let's see the basics..
 
-## 1)Corpus Creation {.tabset .tabset-fade}
+## 1)Corpus Creation 
 
 In this tab your can upload your csv to create corpus from it. The app will calculate the readability with your desired factor and add it to csv as a column. See the sample code below.
 
-```{r cars}
-aidata <- readtext("AI_peopleschina.csv", text_field="content") 
-aicorp <- corpus(aidata) #makes a corpus
-fk <- textstat_readability(aicorp, "Flesch.Kincaid")
-tokenInfo <-summary(aicorp, showmeta = T)
-head(fk)
-```
 
-## 2)Data {.tabset .tabset-fade}
+## 2)Data 
 
 In this tab, you can display each text by clicking the corresponding text line in the dataframe. A pop up window with the text will open. Also you can add notes to your corpus in this tab.
 
-## 3)Explore {.tabset .tabset-fade}
+## 3)Explore 
 
-###Box Plots
+### 3.a)Box Plots
 
 In this tab you can plot a box plot with the desired parameters. As an example you can plot BoxPlot for number of tokens by year.
 
-```{r pressure, echo=FALSE}
-ggplot(tokenInfo, aes(x =as.factor(year), y=Tokens)) + geom_boxplot()
-```
 
-###Corresponce Plot {.tabset .tabset-fade}
 
-####Lexical
+### 3.b)Corresponce Plot 
+
+#### -Lexical
 
  This page has one select input and two text inputs. These will allow you to print a lexical dispersion plot of a choosen year with two given key words. You can also print for only one key word just by filling only the first text box.
  
-```{r  echo = FALSE}
-ai15 <- corpus_subset(aicorp, year == 2015)
-textplot_xray(kwic(ai15, "science" ), kwic(ai15, "technology" ), sort = T)+ 
-  aes(color = keyword) + scale_color_manual(values = c("blue", "red"))
-```
+
  
 
-####Text
+#### -Text
 
 This tab will allow you to create subsets and saving them. Also you can enter a key word to see them in context. It will rende rout a table which displays six words after and before of your keyword.
 
-```{r  echo = FALSE } 
-scikw <- kwic(aicorp, "science")
-a<- kwic(aicorp, "scien", valuetype = "regex")
 
-head(a)
-```
 
-## 4)DFM {.tabset .tabset-fade}
+## 4)DFM 
 
-### Plots
+### 4.a)Plots
 
 This tab will let you plot Text Cloud or Frequency plot with given input value.
 
-```{r echo=FALSE , message=FALSE, warning=FALSE}
 
-ai.dfm <- dfm(aicorp, remove = stopwords("SMART"), stem = T, remove_punct = T, remove_numbers = T)
-ai.dfmw <- dfm_weight(ai.dfm, type ="tfidf" )#"frequency", tf = relfreq, relmaxfreq, logfreq, tfidf
-ai.trm <- dfm_trim(ai.dfmw, min_count = 100, max_count = 300,  verbose = T)
 
-textplot_wordcloud(ai.trm, max.words =Inf,  random.order = FALSE,
-                   rot.per = .25, scale = c(2, 0.01), 
-                   colors = RColorBrewer::brewer.pal(8,"Dark2"))
-
-```
-
-###Grouping
+### 4.b)Grouping
 
 You will see two select inputs. One will contain the headers from your corpus other will contain plot types. This tab will group your corpuses with the given grouping filter and it will render the choosen plot type.
 
-```{r echo= FALSE, message=FALSE, warning=FALSE}
 
-ai.grp <- dfm(aicorp, groups = "year", remove = stopwords("SMART"), remove_punct = TRUE)
-textplot_wordcloud(ai.grp, comparison = T)
 
-```
-
-###Frequency
+### 4.c)Frequency
 In Frequency tab you can enter your own keyword to see it's frequency throughout the years. If you increase the slider input, you will see the most frequent
 words throughout the years. Slider input will change the number of the words in plots.
 
 Filter the term "musk"
-```{r echo = FALSE}
-freq_grouped <- textstat_frequency(ai.dfmw,
-                                   groups = "year")
-# Filter the term "musk"
-fregr <- subset(freq_grouped, feature %in% "musk") 
-ggplot(fregr,  aes(group, frequency)) +
-  geom_point()+
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-```
 
-###Keyness
+### 4.d)Keyness
 
 This page will have two select inputs which contains the years of the corpuses. You can select two year values to compare them with a keyness plot.
 
-```{r echo = FALSE}
 
-ai.sub <- corpus_subset(aicorp, 
-                        year %in% c("2015", "2016"))
-# Create a dfm grouped by president
-ai.subdfm <- dfm(ai.sub, groups = "year", remove = stopwords("english"), 
-                 remove_punct = TRUE)
-# Calculate keyness and determine Trump as target group
-result_keyness <- textstat_keyness(ai.subdfm, target = "2016")
-# Plot estimated word keyness
-textplot_keyness(result_keyness) 
 
-```
-
-###Dictionary
+### 4.e)Dictionary
 
 You can upload your own dictionary to compare the corpuses with the dictionary's categories.
 
-```{r echo=FALSE , message=FALSE, warning=FALSE}
-
-myDict <- dictionary(list(science = c("technology", "scien*", "invent*"),
-                          economy = c("jobs", "economy", "business", "grow", "work")))
-
-ai.dict <- dfm(aicorp, groups = "year",  remove = stopwords("english"), remove_punct = TRUE, dictionary =myDict)
-topfeatures(ai.dict)
-#Baloonplot for , but can alos add other plots
-dt <- as.table(as.matrix(ai.dict))
-library("gplots")
-balloonplot(t(dt), main ="Words", xlab ="", ylab="",
-            label = FALSE, show.margins = FALSE)
 
 
-
-```
-
-###Similarity
+### 4.f)Similarity
 
 You can choose a year to calculate similarity with the given parameter.
 
-```{r echo = FALSE}
 
-ai2016 <- corpus_subset(aicorp, year==2016)
-ai2016dfm <- dfm(ai2016, stem = T, remove = stopwords("english"), remove_punct=T)
-d <- textstat_simil(dfm_weight(ai2016dfm, "tfidf"), margin="features", method="cosine")
-b <- textstat_dist(dfm_weight(ai2016dfm, "tfidf"), margin="documents", method="euclidean")
-head(b)
-
-```
 
 
 

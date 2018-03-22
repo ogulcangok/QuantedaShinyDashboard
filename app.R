@@ -5,7 +5,7 @@ library(readtext)
 library(SnowballC)
 library(ggplot2)
 library(dplyr)
-library("spacyr")
+library(spacyr)
 library(DT)
 library(shinyBS)
 library(anytime)
@@ -20,7 +20,12 @@ ui <- dashboardPage(
   dashboardSidebar(
     
     sidebarMenu(
-      fileInput("file1","Choose CSV File",multiple = TRUE,accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
+      
+      fileInput("file2","If you have already created your corpus, you can upload it here",multiple = TRUE,accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv",".rda",".rds",".RData")),
+      
+      
+      menuItem("Welcome Page",tabName = "welcome",icon = icon("home")),
+      menuItem("Corpus Creation",tabName = "corpus",icon = icon("book")),
       menuItem("Data", tabName = "dataTab", icon = icon("list-alt")),
       menuItem("Explore", tabName = "ExploreTab", icon = icon("search"),
                menuItem("Box Plot", tabName = "boxPlot",icon = icon("archive")),
@@ -29,7 +34,7 @@ ui <- dashboardPage(
                         menuSubItem("Text Data","tex"))
                
                
-               ),
+      ),
       menuItem("DFM", tabName = "dfmTab", icon = icon("cogs"),
                menuItem("Plots",tabName = "plots", icon = icon("bar-chart")),
                menuItem("Grouping",tabName = "grouping",icon = icon("object-group")),
@@ -37,11 +42,13 @@ ui <- dashboardPage(
                menuItem("Keyness",tabName = "keyness",icon = icon("key")),
                menuItem("Dictionary",tabName = "dictionary",icon = icon("book")),
                menuItem("Clustering",tabName = "clustering",icon = icon("clone")),
-               menuItem("Correspondence Analysis", tabName = "correspondence",icon = icon("area-chart"))
+               menuItem("Correspondence Analysis", tabName = "correspondence",icon = icon("area-chart")),
+               menuItem("Spacy",tabName = "Spacy",icon = icon("flag"))
                
                
                
-               )#end of dfm
+               
+      )#end of dfm
       
       
       
@@ -50,18 +57,60 @@ ui <- dashboardPage(
   dashboardBody(
     tabItems(
       # First tab content
+      
+      
+      
+      tabItem(tabName = "welcome",
+              htmlOutput("manual")
+              
+              
+              
+      ),
+      
+      
+      
+      
+      tabItem(tabName = "corpus",
+              box(title = "Upload your CSV",
+                  fileInput("file1","Upload your csv for initialize the app.",multiple = TRUE,accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv",".rda",".rds",".RData")),
+                  selectInput(inputId = "readSelection",label = "Select Readability Measure",choices = c("all", "ARI", "ARI.simple", "Bormuth",
+                                                                                                         "Bormuth.GP", "Coleman", "Coleman.C2", "Coleman.Liau", "Coleman.Liau.grade",
+                                                                                                         "Coleman.Liau.short", "Dale.Chall", "Dale.Chall.old", "Dale.Chall.PSK",
+                                                                                                         "Danielson.Bryan", "Danielson.Bryan.2", "Dickes.Steiwer", "DRP", "ELF",
+                                                                                                         "Farr.Jenkins.Paterson", "Flesch", "Flesch.PSK", "Flesch.Kincaid", "FOG",
+                                                                                                         "FOG.PSK", "FOG.NRI", "FORCAST", "FORCAST.RGL", "Fucks", "Linsear.Write",
+                                                                                                         "LIW", "nWS", "nWS.2", "nWS.3", "nWS.4", "RIX", "Scrabble", "SMOG", "SMOG.C",
+                                                                                                         "SMOG.simple",      "SMOG.de", "Spache", "Spache.old", "Strain",
+                                                                                                         "Traenkle.Bailer", "Traenkle.Bailer.2", "Wheeler.Smith", "meanSentenceLength",
+                                                                                                         "meanWordSyllables")),
+                  textInput("corpusName","Enter Corpus Name to save"),
+                  
+                  textInput("notes","Add Notes"),
+                  
+                  
+                  downloadButton("createCorpus2","Create Corpus")
+                  
+              ),
+              
+              box(title = "Spacy Options",checkboxInput("spacyCheck","Option1"),actionButton("startSpacy","Start Spacy"))
+              
+              
+              
+      ),
+      
+      
       tabItem(tabName = "dataTab",
               fluidPage(
                 
                 box(title = "Summary",withSpinner(dataTableOutput("summary")),collapsible = T,width = 500),
-                box(title = "Add Notes",textInput("notes",""),collapsible = T,actionButton("addNotes","Add Notes"),tableOutput("metaInfo"))
+                box(title = "Notes",tableOutput("metaInfo"))
               )
       ),
       
       # Second tab content
       tabItem(tabName = "boxPlot",
               
-              box("Box Plot",selectInput("plotMenu","Select Plot Filter",c("Tokens","fk")),
+              box("Box Plot",selectInput("plotMenu","Select Plot Filter",c("Tokens","Readability")),
                   selectInput("plotMenuCategory","Select Category",multiple = F,selectize = F,choices = c("year","month")),
                   actionButton("boxShow","Show Plots")),
               box("Graph",withSpinner(plotOutput("plotToken")),collapsible = T,width = 12)
@@ -73,144 +122,217 @@ ui <- dashboardPage(
                   selectInput("selectYear","Select Year",multiple = F,selectize = F,choices = "",selected = ""),
                   column(3,textInput("keyWord", "Enter Your Key Word", width = 150)),
                   column(3,textInput("keyWord2", "Enter Your Key Word", width = 150)),
-              actionButton("lexicalShow","Show Plots")),
+                  actionButton("lexicalShow","Show Plots")),
               
               
               box("Graph",withSpinner(plotOutput("concordencePlot")),collapsible = T,width = 12)
               
-              ),
+      ),
       
       tabItem(tabName = "tex",
               
               box(textInput("saveName","Enter The Subset Name"),
-              
-              downloadButton("save", "Save Subset"),
-              textInput("concoInput","Enter a Key Word"),
-              actionButton("showConcordence","Calculate"),width = 12),
+                  
+                  downloadButton("save", "Save Subset"),
+                  textInput("concoInput","Enter a Key Word"),
+                  actionButton("showConcordence","Calculate"),width = 12),
               box("Table",withSpinner(tableOutput("concordenceTextOut")),width = 12,collapsible = T)
               
               
-              ),
+      ),
       tabItem(tabName = "plots",
               
-    box(selectInput("plotSelect","Select Plot Type",c("Text Cloud","Frequency"),selected = NULL),
-    actionButton("showTextPlot","Show Plot")),
-   box( withSpinner( plotOutput("dfmPlot",dblclick = "dfmPlotDbl",width = 1000,height = 1000)),width = 12)
-   
-   ),#end of plot tab
-   
-   tabItem(tabName = "grouping",
-           
-           box( column(4,
-                       selectInput("groupSelect","Select Grouping Type",choices = c(""))),
-                column(4,
-                       selectInput("plotSelectGroup", "Select Graph Type", c("Text Plot", "Baloon Plot"))),
-                actionButton("groupPlotButton","Show Plots")),
-           box(withSpinner( plotOutput("groupPlot",dblclick = "groupPlotDbl")),width = 12)
-           
-           
-           ),#end of grouping
-   
-   tabItem(tabName = "frequency",
-           box( h3("If the frequency is 0 it will give you your keyword's frequency."),
-                column(11,
-                       column(6,
-                              sliderInput("frequencyInput","Change the number of the top frequent words",min = 0,max = 30,value = 0)),
-                       column(5,
-                              textInput("frequencyKeyWord","Enter Your Own Key Word")))
-           ,width = 12),
-           
-           box(plotOutput("frequencyPlot",dblclick ="frequencyPlotDbl" ),width = 12)
-           
-           ),#end of frequency
-   
-   tabItem(tabName = "keyness",
-           
-           box(column(4,
-                      selectInput("keynessYear1","Select Year","")),
-               column(4,
-                      selectInput("keynessYear2", "Select Year", ""))),
-           box(withSpinner(plotOutput("keynessPlot",dblclick = "keynessPlotDbl")),width = 12)
-           
-           ),#end of keyness
-   
-   tabItem(tabName = "dictionary",
-           
-           box( fileInput("file2","Upload Your Dictionary",multiple = FALSE,accept = ".dic")),
-           box( withSpinner( plotOutput("dictPlot",dblclick = "dictPlotDbl")),width = 12)
-           
-           
-           ),#end of dictionary
-   
-   tabItem(tabName = "clustering",
-           
-           box( column(5,selectInput("clusterSelect","Select Filter",c("documents","features"))),
-                column(5,selectInput("methodSelect","Select Method",c("Jaccard","cosine"))),
-                textAreaInput("wordRemove","Enter The Words You Want To Remove"),
-                actionButton("clusterGo","Show Plot")),
-           box( withSpinner(plotOutput("clustering",dblclick = "clusteringDbl")),width = 12)
-           
-           
-           
-           ),#end of clustering
-   
-   tabItem(tabName = "correspondence",
-           
-           box(selectInput("corrSelect","Select Grouping Type",choices = c("")),
-               actionButton("corrPlot","Show Plot")),
-           
-           box( withSpinner( plotOutput("topic",dblclick = "topicDbl" )),width = 12)
-           
-           
-           )#end of corr
-   
-   
-   
-   
+              box(selectInput("plotSelect","Select Plot Type",c("Text Cloud","Frequency"),selected = NULL),
+                  actionButton("showTextPlot","Show Plot")),
+              box( withSpinner( plotOutput("dfmPlot",dblclick = "dfmPlotDbl",width = 1000,height = 1000)),width = 12)
               
+      ),#end of plot tab
+      
+      tabItem(tabName = "grouping",
+              
+              box( column(4,
+                          selectInput("groupSelect","Select Grouping Type",choices = c(""))),
+                   column(4,
+                          selectInput("plotSelectGroup", "Select Graph Type", c("Text Plot", "Baloon Plot"))),
+                   actionButton("groupPlotButton","Show Plots")),
+              box(withSpinner( plotOutput("groupPlot",dblclick = "groupPlotDbl")),width = 12)
+              
+              
+      ),#end of grouping
+      
+      tabItem(tabName = "frequency",
+              box( h3("If the frequency is 0 it will give you your keyword's frequency."),
+                   column(11,
+                          column(6,
+                                 sliderInput("frequencyInput","Change the number of the top frequent words",min = 0,max = 30,value = 0)),
+                          column(5,
+                                 textInput("frequencyKeyWord","Enter Your Own Key Word")))
+                   ,width = 12),
+              
+              box(plotOutput("frequencyPlot",dblclick ="frequencyPlotDbl" ),width = 12)
+              
+      ),#end of frequency
+      
+      tabItem(tabName = "keyness",
+              
+              box(column(4,
+                         selectInput("keynessYear1","Select Year","")),
+                  column(4,
+                         selectInput("keynessYear2", "Select Year", ""))),
+              box(withSpinner(plotOutput("keynessPlot",dblclick = "keynessPlotDbl")),width = 12)
+              
+      ),#end of keyness
+      
+      tabItem(tabName = "dictionary",
+              
+              box( fileInput("file2","Upload Your Dictionary",multiple = FALSE,accept = ".dic")),
+              box( withSpinner( plotOutput("dictPlot",dblclick = "dictPlotDbl")),width = 12)
+              
+              
+      ),#end of dictionary
+      
+      tabItem(tabName = "clustering",
+              
+              box( column(5,selectInput("clusterSelect","Select Filter",c("documents","features"))),
+                   column(5,selectInput("methodSelect","Select Method",c("Jaccard","cosine"))),
+                   textAreaInput("wordRemove","Enter The Words You Want To Remove"),
+                   actionButton("clusterGo","Show Plot")),
+              box( withSpinner(plotOutput("clustering",dblclick = "clusteringDbl")),width = 12)
+              
+              
+              
+      ),#end of clustering
+      
+      tabItem(tabName = "correspondence",
+              
+              box(selectInput("corrSelect","Select Grouping Type",choices = c("")),
+                  actionButton("corrPlot","Show Plot")),
+              
+              box( withSpinner( plotOutput("topic",dblclick = "topicDbl" )),width = 12)
+              
+              
+      ),#end of corr
+      
+      tabItem(tabName = "Spacy",
+              
+              box(actionButton("startSpacy","Start Spacy"),downloadButton("saveRDA","Save the Current Session"),tableOutput("spacyOut")),
+              box(tableOutput("rdaTable"))
+              
+              
+              
+      )
       
       
-     
+      
+      
+      
+      
+      
+      
     )#end of dashboard body tabs
   )#end of dashboardbody
 )#end of ui
 
 server <- function(input, output,session) {
+  
+  
+  
+  output$manual <- renderPrint({
+    includeMarkdown("manual.Rmd")
+    
+  })
+  
+  
   modalConcor <- modalDialog("Plot",size = "l", plotOutput("modalConcorOut"))
   modalDfm <- modalDialog("Plot",size = "l",plotOutput("modalDfmOut"))
   modalGroup <-  modalDialog("Plot",size = "l",plotOutput("modalGroupOut"))
   modalFreq <- modalDialog("Plot",size = "l",plotOutput("modalFreqOut"))
   modalKey <- modalDialog("Plot",size = "l",plotOutput("modalKeyOut"))
   modalDict <- modalDialog("Plot",size = "l",plotOutput("modalDictOut"))
-  modalHelpGeneral <- modalDialog("Help",size= "l",textOutput("modalHelpGeneralOut"))
-  modalHelpData <- modalDialog("Help",size= "l",textOutput("modalHelpDataOut"))
-  modalHelpGraph <- modalDialog("Help",size= "l",textOutput("modalHelpGraphOut"))
-  modalHelpLexical <-modalDialog("Help",size= "l",textOutput("modalHelpLexicalOut"))
-  modalHelpText <- modalDialog("Help",size= "l",textOutput("modalHelpTextOut"))
-  modalHelpPlot <- modalDialog("Help",size= "l",textOutput("modalHelpPlotOut"))
-  modalHelpGroup <- modalDialog("Help",size= "l",textOutput("modalHelpGroupOut"))
-  modalHelpFreq <- modalDialog("Help",size= "l",textOutput("modalHelpFreqOut"))
-  modalHelpKey <- modalDialog("Help",size= "l",textOutput("modalHelpKeyOut"))
-  modalHelpDict <- modalDialog("Help",size= "l",textOutput("modalHelpDictOut"))
+  modalHelpGeneral <- modalDialog("Help",size= "m",htmlOutput("modalHelpGeneralOut"),easyClose = T)
+  
+  
+  
   modalText <- modalDialog("Text View",size = "l", tableOutput("modalTextOut"))
   
-  readData <- reactive({#Main function to read data from the csv
+  
+  
+  
+  readDataFromCsv <- reactive({#Main function to read data from the csv
+    
     
     aidata <- readtext(input$file1$datapath,text_field = "Text")
     
     
-   
     
-   aidata <- aidata%>% separate(Date,c("day","month","year"),remove = F)
-    
+    aidata <- aidata%>% separate(Date,c("day","month","year"),remove = F)
     
     aidata
     
+    
+    
+    
+    
+    
   })
-  createCorp <- reactive({#creating the corpus from the read data.
-    aicorp <- corpus(readData())
+  
+  createCorpus <- reactive({
+    
+    withProgress(message = "Creating corpus",{
+      incProgress(0.1,"Parsing Dates")
+      Sys.sleep(3)
+      incProgress(0.1,"Separating day,month,year...")
+      Sys.sleep(3)
+      incProgress(0.1,"Counting tokens...")
+      Sys.sleep(3)
+      incProgress(0.1,"Calculating readability...")
+      Sys.sleep(3)
+      incProgress(0.6,"Finishing...")
+      Sys.sleep(3)
+      aicorp <- corpus(readDataFromCsv())
+      metacorpus(aicorp, "notes") <- input$notes
+      readability <- textstat_readability(aicorp, input$readSelection)
+      docvars(aicorp, input$readSelection) <- readability
+      Sys.sleep(3)
+      incProgress(10,"Done!")
+      Sys.sleep(3)
+      
+      
+    })
     
     aicorp
+    
+  })
+  
+  output$createCorpus2 <- downloadHandler(
+    
+    filename = function() {
+      paste(input$corpusName,Sys.Date(),sep = '')
+    },
+    content = function(file) {
+      
+      
+      saveRDS(createCorpus(), file=file)#save the parsed corpus since it takes very long time
+    }
+  )
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  createCorp <- reactive({
+    
+    aicorp <- readRDS(input$file2$datapath)
+    aicorp
+    
   })
   
   output$summary <-  DT::renderDataTable(selection = 'single',{#this func. is displaying the summary of the data.
@@ -229,8 +351,7 @@ server <- function(input, output,session) {
       
       
     }
-    fk <- textstat_readability(aicorp, "Flesch.Kincaid")
-    docvars(aicorp, "fk") <- fk
+    
     summary(aicorp)
     
     
@@ -238,20 +359,17 @@ server <- function(input, output,session) {
     
   })
   
-  observeEvent(input$addNotes, {#action Handler for adding notes the to metada 
-    aicorp <- createCorp()
-    metacorpus(aicorp, "notes") <- input$notes
-    #aicorp
-    output$metaInfo <- renderTable(metacorpus(aicorp, "notes"))
-  })
+  
+  output$metaInfo <- renderTable(metacorpus(createCorp(), "notes"))
+  
   
   updateLists <- reactive({
-    updateSelectInput(inputId = "groupSelect",session  ,choices = colnames(readData() ))
-    updateSelectInput(inputId = "selectYear",session  ,choices = sort(unique(readData()$year)))
-    updateSelectInput(inputId = "keynessYear1",session  ,choices = sort(unique(readData()$year)) )
-    updateSelectInput( inputId = "corrSelect",session,choices = colnames(readData() ))
+    updateSelectInput(inputId = "groupSelect",session  ,choices = colnames(createCorp()$documents ))
+    updateSelectInput(inputId = "selectYear",session  ,choices = sort(unique(createCorp()$documents$year)))
+    updateSelectInput(inputId = "keynessYear1",session  ,choices = sort(unique(createCorp()$documents$year)) )
+    updateSelectInput( inputId = "corrSelect",session,choices = colnames(createCorp()$documents ))
     observe({
-      listYear <- sort(unique(readData()$year))
+      listYear <- sort(unique(createCorp()$documents$year))
       ch1 <- input$keynessYear1
       ch2 <- setdiff(listYear,ch1)
       
@@ -259,16 +377,16 @@ server <- function(input, output,session) {
       
       updateSelectInput(inputId = "keynessYear2",session  ,choices = ch2)
     })
-    updateSelectInput(inputId = "clusterYear",session  ,choices = sort(unique(readData()$year)))
-    updateSelectInput(inputId = "similarityYear",session  ,choices = sort(unique(readData()$year)))
+    updateSelectInput(inputId = "clusterYear",session  ,choices = sort(unique(createCorp()$documents$year)))
+    updateSelectInput(inputId = "similarityYear",session  ,choices = sort(unique(createCorp()$documents$year)))
   })
   
   
   
   calculateRead <- reactive({#this is reactive because output of this func. will be used througout the whole server.
     aicorp <- createCorp()
-    fk <- textstat_readability(aicorp, "Flesch.Kincaid")
-    docvars(aicorp, "fk") <- fk
+    readability <- textstat_readability(aicorp, input$readSelection)
+    docvars(aicorp, "readability") <- readability
     tokenInfo <-summary(aicorp, showmeta = T)
     tokenInfo
   })
@@ -288,13 +406,13 @@ server <- function(input, output,session) {
       ggplot(calculateRead(), aes(x = as.factor(month), y = Tokens)) + geom_boxplot()
       
     }
-    else if (input$plotMenu == "fk" & input$plotMenuCategory == "year"){
+    else if (input$plotMenu == "Readability" & input$plotMenuCategory == "year"){
       
-      ggplot(calculateRead(), aes(x = as.factor(year), y = fk)) + geom_boxplot()
+      ggplot(calculateRead(), aes(x = as.factor(year), y =  readability)) + geom_boxplot()
     }
     
     else {
-      ggplot(calculateRead(), aes(x = as.factor(month), y = fk)) + geom_boxplot()
+      ggplot(calculateRead(), aes(x = as.factor(month), y =  readability)) + geom_boxplot()
     }
     
     
@@ -307,10 +425,10 @@ server <- function(input, output,session) {
     showBox()
   })
   
-    
-    
   
- 
+  
+  
+  
   
   createSubset <- reactive({#reactive method to create subsets
     updateLists()
@@ -838,6 +956,45 @@ server <- function(input, output,session) {
     showModal(modalTopic)
     
   })
+  
+  observeEvent(input$startSpacy,{
+    
+    withProgress(message = "Spacy is in progress",{
+      
+      spacy_initialize()
+      parsedtxt <- spacy_parse(createCorp()) #configurations:pos;tag;entity; lemma; dependency. refer to help
+      incProgress(amount = 10)
+      entity_extract(parsedtxt) #entitiy, entity type
+      #multi-word entities into single "tokens":
+      consen <- entity_consolidate(parsedtxt)
+      #you can filter tokens according to their tags: 
+      per <-filter(consen, entity_type=="EVENT")#change to pos==NOUN or tag ==NN
+      pers <- group_by(per, lemma)
+      pers <-summarise(pers)
+      
+      spacy_finalize()
+      output$spacyOut <- renderTable({  pers })
+      output$saveRDA <- downloadHandler(
+        
+        filename = function() {
+          paste("parsedtxt",Sys.Date(),sep = '')
+        },
+        content = function(file) {
+          
+          
+          saveRDS(parsedtxt, file=file)#save the parsed corpus since it takes very long time
+        }
+      )
+      
+    })
+    
+    
+    
+    
+    
+  })
+  
+  
   
   
 }

@@ -12,42 +12,63 @@ library(anytime)
 library(lubridate)
 library(tidyverse)
 library(shinycssloaders)
+library(SocialMediaLab)
 options(shiny.maxRequestSize=30*1024^2)
+options(shiny.sanitize.errors = F)
+
 
 
 ui <- dashboardPage(
+  
+  
   dashboardHeader(title = "Quanteda UI"),
+  
   dashboardSidebar(
     
     sidebarMenu(
+      menuItem("Welcome Page",tabName = "welcome",icon = icon("home")),
       
-      fileInput("file2","If you have already created your corpus, you can upload it here",multiple = TRUE,accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv",".rda",".rds",".RData")),
+      menuItem("Corpus Operations",icon = icon("folder-open-o"),
+               menuItem("Corpus Creation",tabName = "corpus",icon = icon("newspaper-o")),
+               
+               
+               
+               menuItem("Corpus Summary", tabName = "dataTab", icon = icon("list-alt")),
+               menuItem("Explore Your Corpus", tabName = "ExploreTab", icon = icon("search"),
+                        menuItem("Box Plot", tabName = "boxPlot",icon = icon("archive")),
+                        menuItem("Concordence Plot",tabName = "concor",icon = icon("bar-chart"),
+                                 menuSubItem("Lexical Plots","lex"),
+                                 menuSubItem("Text Data","tex"))
+                        
+                        
+               ),
+               menuItem("Corpus Plots", tabName = "dfmTab", icon = icon("cogs"),
+                        menuItem("Plots",tabName = "plots", icon = icon("bar-chart")),
+                        menuItem("Grouping",tabName = "grouping",icon = icon("object-group")),
+                        menuItem("Frequency",tabName = "frequency",icon = icon("line-chart")),
+                        menuItem("Keyness",tabName = "keyness",icon = icon("key")),
+                        menuItem("Dictionary",tabName = "dictionary",icon = icon("book")),
+                        menuItem("Clustering",tabName = "clustering",icon = icon("clone")),
+                        menuItem("Correspondence Analysis", tabName = "correspondence",icon = icon("area-chart"))
+                        
+                        
+                        
+                        
+                        
+               )#end of dfm
+      )  ,
       
-     
-      menuItem("Corpus Creation",tabName = "corpus",icon = icon("book")),
-      menuItem("Data", tabName = "dataTab", icon = icon("list-alt")),
-      menuItem("Explore", tabName = "ExploreTab", icon = icon("search"),
-               menuItem("Box Plot", tabName = "boxPlot",icon = icon("archive")),
-               menuItem("Concordence Plot",tabName = "concor",icon = icon("bar-chart"),
-                        menuSubItem("Lexical Plots","lex"),
-                        menuSubItem("Text Data","tex"))
+      menuItem("Spacy Operations",icon= icon("envelope-open-o"),
+               
+               
+               menuItem("Spacy Inıtilzate",tabName = "spacy",icon = icon("ra")),
+               menuItem("Discover CSV",tabName = "csv",icon = icon("file-excel-o")),
+               menuItem("CSV Plots",tabName = "csvPlot",icon = icon("bar-chart-o"))
+               
                
                
       ),
-      menuItem("DFM", tabName = "dfmTab", icon = icon("cogs"),
-               menuItem("Plots",tabName = "plots", icon = icon("bar-chart")),
-               menuItem("Grouping",tabName = "grouping",icon = icon("object-group")),
-               menuItem("Frequency",tabName = "frequency",icon = icon("line-chart")),
-               menuItem("Keyness",tabName = "keyness",icon = icon("key")),
-               menuItem("Dictionary",tabName = "dictionary",icon = icon("book")),
-               menuItem("Clustering",tabName = "clustering",icon = icon("clone")),
-               menuItem("Correspondence Analysis", tabName = "correspondence",icon = icon("area-chart")),
-               menuItem("Spacy",tabName = "Spacy",icon = icon("flag"))
-               
-               
-               
-               
-      )#end of dfm
+      menuItem("Live Data Visulize Demo",tabName = "dataDemo",icon = icon("superpowers"))
       
       
       
@@ -57,45 +78,123 @@ ui <- dashboardPage(
     tabItems(
       # First tab content
       
-     
+      
+      
+      tabItem(tabName = "welcome",
+              htmlOutput("manual")
+              
+              
+              
+      ),
+      
+      
+      
       
       tabItem(tabName = "corpus",
-              box(title = "Upload your CSV",
-                  fileInput("file1","Upload your csv for initialize the app.",multiple = TRUE,accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv",".rda",".rds",".RData")),
+              box(width = 12,title = "Upload your CSV",
+                  fileInput("file1","Upload your csv for initialize the app.",multiple = TRUE,accept = " "),
                   selectInput(inputId = "readSelection",label = "Select Readability Measure",choices = c("all", "ARI", "ARI.simple", "Bormuth",
-                                                                                             "Bormuth.GP", "Coleman", "Coleman.C2", "Coleman.Liau", "Coleman.Liau.grade",
-                                                                                             "Coleman.Liau.short", "Dale.Chall", "Dale.Chall.old", "Dale.Chall.PSK",
-                                                                                             "Danielson.Bryan", "Danielson.Bryan.2", "Dickes.Steiwer", "DRP", "ELF",
-                                                                                             "Farr.Jenkins.Paterson", "Flesch", "Flesch.PSK", "Flesch.Kincaid", "FOG",
-                                                                                             "FOG.PSK", "FOG.NRI", "FORCAST", "FORCAST.RGL", "Fucks", "Linsear.Write",
-                                                                                             "LIW", "nWS", "nWS.2", "nWS.3", "nWS.4", "RIX", "Scrabble", "SMOG", "SMOG.C",
-                                                                                             "SMOG.simple",      "SMOG.de", "Spache", "Spache.old", "Strain",
-                                                                                             "Traenkle.Bailer", "Traenkle.Bailer.2", "Wheeler.Smith", "meanSentenceLength",
-                                                                                             "meanWordSyllables")),
+                                                                                                         "Bormuth.GP", "Coleman", "Coleman.C2", "Coleman.Liau", "Coleman.Liau.grade",
+                                                                                                         "Coleman.Liau.short", "Dale.Chall", "Dale.Chall.old", "Dale.Chall.PSK",
+                                                                                                         "Danielson.Bryan", "Danielson.Bryan.2", "Dickes.Steiwer", "DRP", "ELF",
+                                                                                                         "Farr.Jenkins.Paterson", "Flesch", "Flesch.PSK", "Flesch.Kincaid", "FOG",
+                                                                                                         "FOG.PSK", "FOG.NRI", "FORCAST", "FORCAST.RGL", "Fucks", "Linsear.Write",
+                                                                                                         "LIW", "nWS", "nWS.2", "nWS.3", "nWS.4", "RIX", "Scrabble", "SMOG", "SMOG.C",
+                                                                                                         "SMOG.simple",      "SMOG.de", "Spache", "Spache.old", "Strain",
+                                                                                                         "Traenkle.Bailer", "Traenkle.Bailer.2", "Wheeler.Smith", "meanSentenceLength",
+                                                                                                         "meanWordSyllables")),
                   textInput("corpusName","Enter Corpus Name to save"),
                   
+                  textInput("notes","Add Notes"),
                   
-                  actionButton("createCorpus2","Create Corpus"),width = 12
                   
-                  )
-             
+                  downloadButton("createCorpus2","Create Corpus")
+                  
+              )
               
               
+              
+              
+              
+      ),
+      
+      tabItem(tabName = "spacy",
+              tags$h3("This operation will take a long time. When it is done app will automaticly download the parsed text.  \n
+                      "),
+              box(title = "Spacy Options",width = 12,
+                  
+                  textInput("spacyName","Enter parsed data name"),
+                  downloadButton("saveRDA","Save Parsed Corpus")
               ),
-     
+              box(title = "Spacy Output",width = 12,
+                  fileInput("file3","If you want to see the output, upload the parsed text file to the slot below",multiple = TRUE,accept = " "),
+                  selectInput("spacyOptions",label = "Spacy Options",choices = c("Entity Extract","Entity Consolidate"),multiple = F),
+                  checkboxInput("saveCSV","Save output as CSV",value = F),
+                  conditionalPanel(
+                    condition = "input.saveCSV == true",
+                    textInput("csvName","Enter csv name"),
+                    downloadButton("saveCSV","Save CSV")
+                  ),
+                  
+                  actionButton("spacyShow","Run"),
+                  
+                  withSpinner(tableOutput("spacyOut")))
+              ),
+      
+      
+      tabItem(tabName = "csv",
+              
+              box(fileInput("file4","Upload the CSV output of Spacy to use it",multiple = F,accept = " "),
+                  selectInput("textFilter","Choose the text",choices = " "),
+                  selectInput("csvFilter","Choose the entity filter",choices = " ")
+                  
+              ),
+              box(title = "Info About the CSV",
+                  h5("Below is the number of the selected entity type"),
+                  textOutput("csvInfo")),
+              
+              
+              
+              box(tableOutput("csvOut"),title = "CSV Table",width = 12)
+      ),
+      
+      
+      tabItem(tabName = "csvPlot",
+              
+              
+              box("Options",
+                  checkboxInput("csvPlotOption1","Quantity of entity types in each text"),
+                  checkboxInput("csvPlotOption2","Quantity of a specific entity type in texts"),
+                  
+                  conditionalPanel(
+                    condition = "input.csvPlotOption1 == true",
+                    selectInput("Select the text no",inputId = "textFilter2",choices = "" )),
+                  conditionalPanel(
+                    condition = "input.csvPlotOption2 == true",
+                    selectInput("Select the entity type",inputId = "csvFilter2",choices = "" ))
+                  
+              ),
+              box("Plot",plotOutput("csvPlot"),width = 12)
+              
+      ),
+      
       
       tabItem(tabName = "dataTab",
               fluidPage(
                 
-                box(title = "Summary",withSpinner(dataTableOutput("summary")),collapsible = T,width = 500),
-                box(title = "Add Notes",textInput("notes",""),collapsible = T,actionButton("addNotes","Add Notes"),tableOutput("metaInfo"))
+                
+                
+                box(fileInput("file2","If you have already created your corpus, you can upload it here",multiple = TRUE,accept = " "),
+                    title = "Corpus",tableOutput("metaInfo"),width = 12),
+                box(title = "Summary",withSpinner(dataTableOutput("summary")),collapsible = T,width = 12)
+                
               )
       ),
       
       # Second tab content
       tabItem(tabName = "boxPlot",
               
-              box("Box Plot",selectInput("plotMenu","Select Plot Filter",c("Tokens","Readability")),
+              box(width = 12,"Box Plot",selectInput("plotMenu","Select Plot Filter",c("Tokens","Readability")),
                   selectInput("plotMenuCategory","Select Category",multiple = F,selectize = F,choices = c("year","month")),
                   actionButton("boxShow","Show Plots")),
               box("Graph",withSpinner(plotOutput("plotToken")),collapsible = T,width = 12)
@@ -103,7 +202,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "lex",
               
-              box("Concordence",
+              box(width = 12,"Concordence",
                   selectInput("selectYear","Select Year",multiple = F,selectize = F,choices = "",selected = ""),
                   column(3,textInput("keyWord", "Enter Your Key Word", width = 150)),
                   column(3,textInput("keyWord2", "Enter Your Key Word", width = 150)),
@@ -127,7 +226,7 @@ ui <- dashboardPage(
       ),
       tabItem(tabName = "plots",
               
-              box(selectInput("plotSelect","Select Plot Type",c("Text Cloud","Frequency"),selected = NULL),
+              box(width = 12,selectInput("plotSelect","Select Plot Type",c("Text Cloud","Frequency"),selected = NULL),
                   actionButton("showTextPlot","Show Plot")),
               box( withSpinner( plotOutput("dfmPlot",dblclick = "dfmPlotDbl",width = 1000,height = 1000)),width = 12)
               
@@ -135,11 +234,11 @@ ui <- dashboardPage(
       
       tabItem(tabName = "grouping",
               
-              box( column(4,
-                          selectInput("groupSelect","Select Grouping Type",choices = c(""))),
-                   column(4,
-                          selectInput("plotSelectGroup", "Select Graph Type", c("Text Plot", "Baloon Plot"))),
-                   actionButton("groupPlotButton","Show Plots")),
+              box(width = 12, column(4,
+                                     selectInput("groupSelect","Select Grouping Type",choices = c(""))),
+                  column(4,
+                         selectInput("plotSelectGroup", "Select Graph Type", c("Text Plot", "Baloon Plot"))),
+                  actionButton("groupPlotButton","Show Plots")),
               box(withSpinner( plotOutput("groupPlot",dblclick = "groupPlotDbl")),width = 12)
               
               
@@ -160,8 +259,8 @@ ui <- dashboardPage(
       
       tabItem(tabName = "keyness",
               
-              box(column(4,
-                         selectInput("keynessYear1","Select Year","")),
+              box(width = 12,column(4,
+                                    selectInput("keynessYear1","Select Year","")),
                   column(4,
                          selectInput("keynessYear2", "Select Year", ""))),
               box(withSpinner(plotOutput("keynessPlot",dblclick = "keynessPlotDbl")),width = 12)
@@ -170,7 +269,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "dictionary",
               
-              box( fileInput("file2","Upload Your Dictionary",multiple = FALSE,accept = ".dic")),
+              box(width = 12, fileInput("file2","Upload Your Dictionary",multiple = FALSE,accept = ".dic")),
               box( withSpinner( plotOutput("dictPlot",dblclick = "dictPlotDbl")),width = 12)
               
               
@@ -178,10 +277,10 @@ ui <- dashboardPage(
       
       tabItem(tabName = "clustering",
               
-              box( column(5,selectInput("clusterSelect","Select Filter",c("documents","features"))),
-                   column(5,selectInput("methodSelect","Select Method",c("Jaccard","cosine"))),
-                   textAreaInput("wordRemove","Enter The Words You Want To Remove"),
-                   actionButton("clusterGo","Show Plot")),
+              box(width = 12, column(5,selectInput("clusterSelect","Select Filter",c("documents","features"))),
+                  column(5,selectInput("methodSelect","Select Method",c("Jaccard","cosine"))),
+                  textAreaInput("wordRemove","Enter The Words You Want To Remove"),
+                  actionButton("clusterGo","Show Plot")),
               box( withSpinner(plotOutput("clustering",dblclick = "clusteringDbl")),width = 12)
               
               
@@ -190,7 +289,7 @@ ui <- dashboardPage(
       
       tabItem(tabName = "correspondence",
               
-              box(selectInput("corrSelect","Select Grouping Type",choices = c("")),
+              box(width = 12,selectInput("corrSelect","Select Grouping Type",choices = c("")),
                   actionButton("corrPlot","Show Plot")),
               
               box( withSpinner( plotOutput("topic",dblclick = "topicDbl" )),width = 12)
@@ -198,14 +297,11 @@ ui <- dashboardPage(
               
       ),#end of corr
       
-      tabItem(tabName = "Spacy",
-              
-              box(actionButton("startSpacy","Start Spacy"),downloadButton("saveRDA","Save the Current Session"),tableOutput("spacyOut")),
-              box(tableOutput("rdaTable"))
-              
-              
-              
-              )
+      tabItem(tabName = "dataDemo",
+              box(width = 12,downloadButton("demoGo","Go"),title = "Live Data Demo",
+                  textInput("demoText","Enter the search filter"),
+                  withSpinner(dataTableOutput("demoOut")))
+      )
       
       
       
@@ -214,13 +310,22 @@ ui <- dashboardPage(
       
       
       
-    )#end of dashboard body tabs
+      
+  )#end of dashboard body tabs
   )#end of dashboardbody
 )#end of ui
 
 server <- function(input, output,session) {
   
-
+  
+  output$manual <- renderPrint({
+    includeMarkdown("manual.Rmd")
+    
+  })
+  
+  
+  
+  
   modalConcor <- modalDialog("Plot",size = "l", plotOutput("modalConcorOut"))
   modalDfm <- modalDialog("Plot",size = "l",plotOutput("modalDfmOut"))
   modalGroup <-  modalDialog("Plot",size = "l",plotOutput("modalGroupOut"))
@@ -228,66 +333,77 @@ server <- function(input, output,session) {
   modalKey <- modalDialog("Plot",size = "l",plotOutput("modalKeyOut"))
   modalDict <- modalDialog("Plot",size = "l",plotOutput("modalDictOut"))
   modalHelpGeneral <- modalDialog("Help",size= "m",htmlOutput("modalHelpGeneralOut"),easyClose = T)
- 
+  
   
   
   modalText <- modalDialog("Text View",size = "l", tableOutput("modalTextOut"))
   
-  
-  output$manualOut <- renderText({
+  readData <- reactive({
     
-    includeHTML("rere.html")
-    })
+    parsedCSV <- read.csv(input$file4$datapath)
+    updateSelectInput(inputId = "csvFilter",session,choices = unique(parsedCSV$entity_type))
+    updateSelectInput(inputId = "csvFilter2",session,choices = unique(parsedCSV$entity_type))
+    updateSelectInput(inputId = "textFilter",session,choices = c("all",sort(unique(parsedCSV$doc_id))))
+    updateSelectInput(inputId = "textFilter2",session,choices = c("all",sort(unique(parsedCSV$doc_id))))
+    parsedCSV
+    
+  })
+  
   
   readDataFromCsv <- reactive({#Main function to read data from the csv
     
-   
-    aidata <- readtext(input$file1$datapath,text_field = "Text")
-   
     
+    aidata <- readtext(input$file1$datapath,text_field = "Text")
     
     aidata <- aidata%>% separate(Date,c("day","month","year"),remove = F)
     
     aidata
-    
-    
-    
-    
-    
-    
   })
   
-  observeEvent(input$createCorpus2,{
-    removeModal()
+  createCorpus <- reactive({
+    
     withProgress(message = "Creating corpus",{
       incProgress(0.1,"Parsing Dates")
-      Sys.sleep(3)
-      incProgress(0.1,"Separating day,month,year")
-      Sys.sleep(3)
-      incProgress(0.1,"Counting tokens")
-      Sys.sleep(3)
-      incProgress(0.1,"Calculating readability")
-      Sys.sleep(3)
-      incProgress(0.6,"Finishing")
-      Sys.sleep(3)
+      Sys.sleep(0.6)
+      incProgress(0.1,"Separating day,month,year...")
+      Sys.sleep(0.6)
+      incProgress(0.1,"Counting tokens...")
+      Sys.sleep(0.6)
+      incProgress(0.1,"Calculating readability...")
+      Sys.sleep(0.6)
+      incProgress(0.6,"Finishing...")
+      Sys.sleep(0.6)
       aicorp <- corpus(readDataFromCsv())
+      metacorpus(aicorp, "notes") <- input$notes
       readability <- textstat_readability(aicorp, input$readSelection)
       docvars(aicorp, input$readSelection) <- readability
-      Sys.sleep(3)
-      incProgress(10,"Done")
-      Sys.sleep(3)
+      Sys.sleep(0.6)
+      incProgress(10,"Done!")
+      Sys.sleep(0.6)
       
       
-    } )
-   
-    saveRDS(aicorp,input$corpusName)
+    })
     
+    aicorp
     
   })
   
+  
+  
+  output$createCorpus2 <- downloadHandler(
+    
+    filename = function() {
+      paste(input$corpusName,Sys.Date(),sep = '')
+    },
+    content = function(file) {
+      
+      
+      saveRDS(createCorpus(), file=file)#save the parsed corpus since it takes very long time
+    }
+  )
   createCorp <- reactive({
     
-     aicorp <- readRDS(input$file2$datapath)
+    aicorp <- readRDS(input$file2$datapath)
     aicorp
     
   })
@@ -301,46 +417,110 @@ server <- function(input, output,session) {
     {
       
       output$modalTextOut <- renderTable(texts(createCorp())[s])
+      
       showModal(modalText)
-      
-      
-      
-      
-      
     }
-   
+    
     summary(aicorp)
-    
-    
-    
-    
   })
   
-  observeEvent(input$addNotes, {#action Handler for adding notes the to metada 
-    aicorp <- createCorp()
-    metacorpus(aicorp, "notes") <- input$notes
-    #aicorp
-   
-    output$metaInfo <- renderTable(metacorpus(aicorp, "notes"))
-  })
+  
+  output$metaInfo <- renderTable(metacorpus(createCorp(), "notes"))
   
   updateLists <- reactive({
     updateSelectInput(inputId = "groupSelect",session  ,choices = colnames(createCorp()$documents ))
     updateSelectInput(inputId = "selectYear",session  ,choices = sort(unique(createCorp()$documents$year)))
     updateSelectInput(inputId = "keynessYear1",session  ,choices = sort(unique(createCorp()$documents$year)) )
     updateSelectInput( inputId = "corrSelect",session,choices = colnames(createCorp()$documents ))
+    
     observe({
       listYear <- sort(unique(createCorp()$documents$year))
       ch1 <- input$keynessYear1
       ch2 <- setdiff(listYear,ch1)
-      
-      
-      
       updateSelectInput(inputId = "keynessYear2",session  ,choices = ch2)
     })
     updateSelectInput(inputId = "clusterYear",session  ,choices = sort(unique(createCorp()$documents$year)))
     updateSelectInput(inputId = "similarityYear",session  ,choices = sort(unique(createCorp()$documents$year)))
   })
+  
+  
+  filterEntity <- reactive({
+    
+    parsedCSV <- readData()
+    if(input$textFilter == "all")
+    {  
+      
+      a <-filter(parsedCSV,entity_type == input$csvFilter)
+      
+      a
+    }
+    
+    
+    else{
+      a <-filter(parsedCSV,entity_type == input$csvFilter)
+      name <- paste("text",input$textFilter,sep = "")
+      b <- filter(a, doc_id == name)
+      b
+    }
+    
+  })
+  
+  
+  output$csvOut <- renderTable({
+    
+    filterEntity()
+    
+  })
+  
+  output$csvInfo <- renderText({
+    
+    a <-sum(readData()$entity_type == input$csvFilter)
+    a
+    
+  })
+  
+  csvPlot <- reactive({
+    
+    entity_type <- readData()$entity_type
+    if(input$csvPlotOption1 == T)
+    {
+      
+      if(input$textFilter2 == "all")
+      {  
+        
+        
+        ggplot(readData(),aes(x = as.factor(entity_type)))+ geom_bar()
+      }
+      else
+      {
+        name <- paste("text",input$textFilter2,sep = "")
+        b <- filter(readData(), doc_id == name)
+        
+        ggplot(b , aes(x = as.factor(entity_type)))+ geom_bar()
+      }
+    }#end of plottype1
+    
+    else if(input$csvPlotOption2 == T)
+    {
+      
+      
+      a <-filter(readData(),entity_type == input$csvFilter2)
+      ggplot(a,aes(x = as.factor(doc_id)))+ geom_bar()
+      
+      
+      
+      
+    }
+    
+  })
+  
+  
+  output$csvPlot <- renderPlot({
+    csvPlot()
+    
+  })
+  
+  
   
   
   
@@ -359,8 +539,6 @@ server <- function(input, output,session) {
       
       ggplot(calculateRead(), aes(x = as.factor(year), y = Tokens)) + geom_boxplot()
       
-      
-      
     }
     else if (input$plotMenu == "Tokens" & input$plotMenuCategory == "month") {
       
@@ -375,21 +553,10 @@ server <- function(input, output,session) {
     else {
       ggplot(calculateRead(), aes(x = as.factor(month), y =  readability)) + geom_boxplot()
     }
-    
-    
-    
   })
-  
-  
-  
   output$plotToken <- renderPlot({#and drawing the plot of the calculateHead()
     showBox()
   })
-  
-  
-  
-  
-  
   
   createSubset <- reactive({#reactive method to create subsets
     updateLists()
@@ -414,10 +581,6 @@ server <- function(input, output,session) {
       concoText()
     }
   )
-  
-  
-  
-  
   
   createKW <- reactive({#concordence tab functions
     options(width = 200)
@@ -675,12 +838,7 @@ server <- function(input, output,session) {
       
     }
     showModal(modalFreq)
-    
-    
   })
-  
-  
-  
   output$keynessPlot <- renderPlot({
     updateLists()
     ai.sub <- corpus_subset(createCorp(), 
@@ -918,63 +1076,133 @@ server <- function(input, output,session) {
     
   })
   
-  observeEvent(input$startSpacy,{
+  
+  
+  
+  output$saveRDA <- downloadHandler(
     
-    withProgress(message = "Spacy is in progress",{
+    filename = function() {
+      paste(input$spacyName,Sys.Date(),sep = '')
+    },
+    content = function(file) {
       
-    spacy_initialize()
-    parsedtxt <- spacy_parse(createCorp()) #configurations:pos;tag;entity; lemma; dependency. refer to help
-    incProgress(amount = 10)
-    entity_extract(parsedtxt) #entitiy, entity type
-    #multi-word entities into single "tokens":
-    consen <- entity_consolidate(parsedtxt)
-    #you can filter tokens according to their tags: 
-    per <-filter(consen, entity_type=="EVENT")#change to pos==NOUN or tag ==NN
-    pers <- group_by(per, lemma)
-    pers <-summarise(pers)
-   
-    spacy_finalize()
-    output$spacyOut <- renderTable({  pers })
-    output$saveRDA <- downloadHandler(
       
-      filename = function() {
-        paste("parsedtxt",Sys.Date(),".rda",sep = '')
-      },
-      content = function(file) {
-    
-        
+      withProgress(message = "Spacy is in progress",{
+        aicorp <- createCorp()
+        spacy_initialize()
+        incProgress(amount = 0.4)
+        parsedtxt <- spacy_parse(aicorp) #configurations:pos;tag;entity; lemma; dependency. refer to help
+        incProgress(amount = 10,message = "Done.")
         saveRDS(parsedtxt, file=file)#save the parsed corpus since it takes very long time
+        spacy_finalize()
       }
-    )
-    
+      )
     })
-    
-   
-    
-    
-    
-  })
-  
-  rda <- reactive({
+  spacyOutput <- eventReactive(input$spacyShow,{
     spacy_initialize()
-    parsedtxt <- readRDS(input$sessionSave$datapath)
-    entity_extract(parsedtxt) #entitiy, entity type
-    #multi-word entities into single "tokens":
-    consen <- entity_consolidate(parsedtxt)
-    #you can filter tokens according to their tags: 
-    per <-filter(consen, entity_type=="EVENT")#change to pos==NOUN or tag ==NN
-    pers <- group_by(per, lemma)
-    pers <-summarise(pers)
-    spacy_finalize()
-    pers
-  })
-  
-  output$rdaTable <- renderTable({
     
-    rda()
+    parsedtxt <- readRDS(input$file3$datapath) 
+    if(input$spacyOptions == "Entity Extract" )
+    { 
+      
+      # spacy_initialize()
+      a <- entity_extract(parsedtxt) 
+      spacy_finalize()
+      a
+    }
+    
+    else if (input$spacyOptions == "Entity Consolidate" )
+    {
+      
+      consen <- entity_consolidate(parsedtxt)
+      #you can filter tokens according to their tags: 
+      per <-filter(consen, entity_type=="EVENT")#change to pos==NOUN or tag ==NN
+      pers <- group_by(per, lemma)
+      pers <-summarise(pers)
+      spacy_finalize()
+      
+      
+      pers
+    }
+  })
+  output$saveCSV <- downloadHandler(
+    filename = function() {
+      paste(input$csvName, ".csv", sep = "")
+    },
+    content = function(file) {
+      spacy_initialize()
+      parsedtxt <- readRDS(input$file3$datapath) 
+      if(input$spacyOptions == "Entity Extract" )
+      { 
+        
+        # spacy_initialize()
+        a <- entity_extract(parsedtxt) 
+        spacy_finalize()
+        
+        write.csv(a,file)
+        
+        
+        
+      }
+      
+      else if (input$spacyOptions == "Entity Consolidate" )
+      {
+        
+        consen <- entity_consolidate(parsedtxt)
+        #you can filter tokens according to their tags: 
+        per <-filter(consen, entity_type=="EVENT")#change to pos==NOUN or tag ==NN
+        pers <- group_by(per, lemma)
+        pers <-summarise(pers)
+        spacy_finalize()
+        
+        write.csv(pers,file)
+      }
+      
+      
+    }
+    
+  )
+  
+  output$spacyOut <- renderTable({ spacyOutput() })
+  
+  output$demoGo <- downloadHandler(
+    
+    filename = function() {
+      paste("twitterData",sep = " ")
+    },
+    content = function(file) {
+      apiKey <- "bIhOZeVfPfdXDxdHfWtUJ0up9"
+      apiSecret <-  "Bd1WfuhYrZUpYE7ODGO65lnknvIUvoC35IJcvr4lRH3cOCbAHT"
+      accessToken <- "947756430672711680-avkhywucJgaXhbOjiCd6aXGXVZRHISj"
+      tokenSecret <- "EDiYOUcLix4j6rjPxrcUopQ0eASynASBjNpjH9o92GYY2"
+      
+      AuthenticateWithTwitterAPI(api_key = apiKey, api_secret = apiSecret, access_token = accessToken, access_token_secret = tokenSecret)
+      a <-  CollectDataTwitter(searchTerm = input$demoText, numTweets = 500,verbose = T)
+     twCorp <- corpus(a)
+     
+     saveRDS(twCorp,file)
+      
+      
+      
+      
+    }
+    
+    
+    
+    
+    
+    
+  )
+  
+  
+  output$demoOut <- renderDataTable({
+    
+    #twitter()
   })
   
   
-}
+  
+  
+}#End of server
 
 shinyApp(ui, server)
